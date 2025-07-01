@@ -6,10 +6,10 @@ let dbConnect = require("./dbConnect");
 
 app.use(express.json());
 
-let userRoutes = require("./routes/users");
-let postRoutes = require("./routes/posts");
-let commentRoutes = require("./routes/comments");
-let likeRoutes = require("./routes/likes");
+let userRoutes = require("./routes/userRoutes");
+let postRoutes = require("./routes/postRoutes");
+let commentRoutes = require("./routes/commentRoutes");
+let likeRoutes = require("./routes/likeRoutes");
 
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
