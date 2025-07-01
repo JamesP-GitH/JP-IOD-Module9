@@ -4,10 +4,12 @@ const express = require("express");
 const app = express();
 
 const dogRoutes = require("./routes/dogRoutes");
+const cachedDogRoutes = require("./routes/cachedDogRoutes");
 
 app.use(express.json());
 
 app.use("/api/dogs", dogRoutes);
+app.use("/api/cached-dogs", cachedDogRoutes);
 
 app.get("/", (req, res) => {
     res.json({ message: "Welcome to the Dog CEO API app!" });
