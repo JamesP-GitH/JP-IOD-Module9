@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta
+            name="viewport"
+            content="width=device-width,
+initial-scale=1.0"
+        />
+        <title>Socket Chat App</title>
+        <style>
+            body {
+                margin: 0;
+                font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f5f7fa;
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+            }
+
+            h2 {
+                margin: 1rem;
+                text-align: center;
+            }
+
+            #users {
+                margin: 0 1rem;
+                color: #333;
+                font-size: 0.9rem;
+            }
+
+            #messages {
+                list-style: none;
+                padding: 0 1rem;
+                flex-grow: 1;
+                overflow-y: auto;
+                margin: 0;
+            }
+
+            #messages > li {
+                padding: 0.6rem 1rem;
+                margin: 0.2rem 0;
+                border-radius: 8px;
+                background-color: #e4e9f0;
+            }
+
+            #messages > li.own {
+                background-color: #d1ffd6;
+                font-weight: bold;
+            }
+
+            #messages > li.system {
+                background-color: #fdf0d5;
+                font-style: italic;
+                color: #666;
+            }
+
+            #typing {
+                margin: 0.5rem 1rem;
+                font-style: italic;
+                color: #777;
+            }
+
+            #form {
+                display: flex;
+                padding: 0.5rem;
+                background: #fff;
+                border-top: 1px solid #ccc;
+            }
+
+            #input {
+                flex: 1;
+                padding: 0.5rem 1rem;
+                font-size: 1rem;
+                border: 1px solid #ccc;
+                border-radius: 20px;
+                outline: none;
+            }
+
+            #form > button {
+                margin-left: 0.5rem;
+                padding: 0.5rem 1.2rem;
+                font-size: 1rem;
+                border: none;
+                border-radius: 20px;
+                background-color: #333;
+                color: white;
+                cursor: pointer;
+            }
+
+            #form > button:hover {
+                background-color: #555;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Socket Chat Room</h2>
+        <p id="users">Online: <span id="online-users"></span></p>
+        <ul id="messages"></ul>
+        <p id="typing"></p>
+
+        <div id="form">
+            <input id="input" autocomplete="off" placeholder="Type your message..." />
+            <button id="send">Send</button>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+
+            const input = document.getElementById("input");
+            const sendBtn = document.getElementById("send");
+            const messages = document.getElementById("messages");
+            const typingIndicator = document.getElementById("typing");
+            const onlineUsers = document.getElementById("online-users");
+
+            let nicknameSet = false;
+
+            window.onload = () => {
+                let nickname = "";
+                while (!nickname) {
+                    nickname = prompt("Enter your nickname:");
+                    if (nickname) {
+                        socket.emit("set nickname", nickname.trim());
+                        nicknameSet = true;
+                    }
+                }
+            };
+
+            sendBtn.addEventListener("click", () => {
+                if (input.value.trim() && nicknameSet) {
+                    socket.emit("chat message", input.value.trim());
+                    input.value = "";
+                    typingIndicator.innerText = "";
+                }
+            });
+
+            input.addEventListener("keypress", () => {
+                socket.emit("typing");
+            });
+
+            socket.on("chat message", ({ sender, msg }) => {
+                const item = document.createElement("li");
+                item.textContent = `${sender}: ${msg}`;
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on("own message", ({ sender, msg }) => {
+                const item = document.createElement("li");
+                item.textContent = `You: ${msg}`;
+                item.classList.add("own");
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on("user joined", (msg) => {
+                const item = document.createElement("li");
+                item.textContent = msg;
+                item.classList.add("system");
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on("user left", (msg) => {
+                const item = document.createElement("li");
+                item.textContent = msg;
+                item.classList.add("system");
+                messages.appendChild(item);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on("typing", (user) => {
+                typingIndicator.innerText = `${user} is typing...`;
+                setTimeout(() => (typingIndicator.innerText = ""), 1000);
+            });
+
+            socket.on("online users", (users) => {
+                onlineUsers.innerText = users.join(", ");
+            });
+        </script>
+    </body>
+</html>
